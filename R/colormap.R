@@ -36,6 +36,14 @@ select_colors <- function(palette) {
       "#d29c9d", "#cf3c29", "#d2d2e4", "#63065d", "#2e012e",
       "#701a12", "#393b78", "#363cea"
     ),
-    stop("Palette not recognized. Available options: col29, col28, col_sim, col_sex, col_33")
+    col_grey_red = c(
+      "#eee1d9", "#DEC5B6", "#E3B194",
+      "#E89D71", "#F2A47E", "#E77E67",
+      "#DC5851", "#D1313A", "#C62834",
+      "#B4202E"
+    ),
+    stop(
+      "Available options: col29, col28, col_sim, col_sex, col_33, col_grey_red"
+    )
   )
 }
