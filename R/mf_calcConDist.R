@@ -1,4 +1,45 @@
+#' Calculate Cell Type Distribution by Condition
+#' 
+#' @description
+#' Calculates the distribution of cell types across different experimental conditions
+#' using various statistical methods including chi-square test and Fisher's exact test.
+#' 
+#' @param dat.tb A data.table object containing the cell metadata
+#' @param bySample Logical, whether to perform analysis by sample. Default is FALSE
+#' @param colname.cluster Character, column name for cell clusters. Default is "seurat_clusters"
+#' @param colname.sample Character, column name for sample IDs. Required if bySample = TRUE
+#' @param colname.condition Character, column name for experimental conditions. Default is "orig.ident"
+#' @param method Character, statistical method to use. Options are "chisq", "fisher", or "freq". Default is "chisq"
+#' @param min.rowSum Numeric, minimum row sum threshold for filtering in fisher test. Default is 0
+#' 
+#' @return 
+#' Depending on the method:
+#' \itemize{
+#'   \item For "chisq": Returns a matrix of observed/expected ratios
+#'   \item For "fisher": Returns a list containing count distribution, p-values, adjusted p-values, and odds ratios
+#'   \item For "freq": Returns a list containing frequency analysis results with logFC and significance tests
+#' }
+#' 
+#' @examples
+#' \dontrun{
+#' # Basic usage with chi-square test
+#' result <- calcConDist(dat.tb)
+#' 
+#' # Using Fisher's exact test
+#' fisher_result <- calcConDist(dat.tb, method = "fisher")
+#' 
+#' # Analysis by sample
+#' sample_result <- calcConDist(dat.tb, 
+#'                             bySample = TRUE,
+#'                             colname.sample = "sample_id")
+#' }
+#' 
+#' @importFrom data.table data.table as.data.table melt dcast :=
+#' @importFrom stats fisher.test chisq.test t.test wilcox.test p.adjust
+#' 
 #' @export
+#' @name calcConDist
+
 library(data.table)
 
 calcConDist <- function(dat.tb, bySample = FALSE,
