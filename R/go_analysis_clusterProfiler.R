@@ -16,14 +16,12 @@ NULL
 #' using clusterProfiler and simplifies the results.
 #'
 #' @param gene_ids A character vector of gene identifiers
-#' @param orgdb An OrgDb object for the specific organism (e.g., org.Hs.eg.db for human)
+#' @param orgdb An OrgDb object for the specific organism (e.g., org.At.tair.db for Athaliana)
 #' @param ont A character string specifying the ontology type ("BP", "CC", or "MF")
 #' @param keyType The key type of input gene IDs
 #' @param pvalueCutoff Adjusted p-value cutoff (default: 0.05)
 #' @param qvalueCutoff Q-value cutoff (default: 0.2)
 #' @param simplify_cutoff Similarity cutoff for simplifying GO terms (default: 0.7)
-#' @param use_cache Logical, whether to use cached results (default: TRUE)
-#' @param cache_dir Directory for storing cached results (default: "cache")
 #'
 #' @return A simplified enrichGO result object or NULL if no enrichment is found
 #' @examples
@@ -107,11 +105,6 @@ pGO <- function(
         warning(sprintf("Error in GO analysis: %s", e$message))
         return(NULL)
     })
-    
-    # Cache results if successful
-    if (!is.null(result) && use_cache) {
-        saveRDS(result, cache_file)
-    }
     
     return(result)
 }
