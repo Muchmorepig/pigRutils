@@ -67,9 +67,6 @@ pGO <- function(
     # Remove duplicates
     gene_ids <- unique(gene_ids)
     
-    # Progress indicator
-    message("Starting GO enrichment analysis...")
-    
     # Perform GO enrichment analysis with error handling
     result <- tryCatch({
         # Perform GO enrichment
@@ -295,7 +292,7 @@ batch_GO <- function(gene_lists, orgdb, ...) {
     }
     
     results <- lapply(names(gene_lists), function(name) {
-        message(sprintf("Processing gene list: %s", name))
+        message(sprintf("Processing: %s", name))
         result <- pGO(gene_lists[[name]], orgdb, ...)
         return(result)
     })
