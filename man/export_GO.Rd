@@ -7,7 +7,7 @@
 export_GO(go_result, file, sheets = NULL)
 }
 \arguments{
-\item{go_result}{GO enrichment result object}
+\item{go_result}{GO enrichment result object or a list of GO result objects}
 
 \item{file}{Output file path (must end in .xlsx or .csv)}
 

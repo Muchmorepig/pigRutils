@@ -11,9 +11,7 @@ pGO(
   keyType = "SYMBOL",
   pvalueCutoff = 0.05,
   qvalueCutoff = 0.2,
-  simplify_cutoff = 0.7,
-  use_cache = FALSE,
-  cache_dir = "cache"
+  simplify_cutoff = 0.7
 )
 }
 \arguments{
