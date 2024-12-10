@@ -244,7 +244,7 @@ plotGO <- function(
 
 #' Export GO Enrichment Results
 #'
-#' @param go_result GO enrichment result object
+#' @param go_result GO enrichment result object or a list of GO result objects
 #' @param file Output file path (must end in .xlsx or .csv)
 #' @param sheets Named list of data frames for Excel export (optional)
 #'
@@ -256,20 +256,41 @@ export_GO <- function(go_result, file, sheets = NULL) {
         return(invisible(NULL))
     }
     
-    # Prepare basic results
-    basic_results <- go_result@result[, c(
-        "ID", "Description", "GeneRatio", "BgRatio",
-        "pvalue", "p.adjust", "qvalue", "Count", "geneID"
-    )]
+    # Function to extract results from a single GO result
+    extract_results <- function(go_obj) {
+        if (is.null(go_obj)) return(NULL)
+        go_obj@result
+    }
     
-    # Export based on file type
+    # Handle different input types
     if (grepl("\\.xlsx$", file)) {
-        if (is.null(sheets)) {
-            sheets <- list(GO_Results = basic_results)
+        if (is.list(go_result) && !is(go_result, "enrichResult")) {
+            # Handle list of GO results
+            sheets <- lapply(go_result, extract_results)
+            
+            # If the list is named, use those names for sheets
+            if (!is.null(names(go_result))) {
+                names(sheets) <- names(go_result)
+            } else {
+                # Create default sheet names if list is unnamed
+                names(sheets) <- paste0("GO_Results_", seq_along(sheets))
+            }
+        } else {
+            # Handle single GO result
+            if (is.null(sheets)) {
+                sheets <- list(GO_Results = extract_results(go_result))
+            }
         }
         writexl::write_xlsx(sheets, path = file)
+        
     } else if (grepl("\\.csv$", file)) {
-        write.csv(basic_results, file = file, row.names = FALSE)
+        if (is.list(go_result) && !is(go_result, "enrichResult")) {
+            warning("Multiple GO results cannot be exported to a single CSV file. Only the first result will be exported.")
+            results <- extract_results(go_result[[1]])
+        } else {
+            results <- extract_results(go_result)
+        }
+        write.csv(results, file = file, row.names = FALSE)
     } else {
         stop("Unsupported file format. Use .xlsx or .csv")
     }
