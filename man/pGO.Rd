@@ -17,7 +17,7 @@ pGO(
 \arguments{
 \item{gene_ids}{A character vector of gene identifiers}
 
-\item{orgdb}{An OrgDb object for the specific organism (e.g., org.Hs.eg.db for human)}
+\item{orgdb}{An OrgDb object for the specific organism (e.g., org.At.tair.db for Athaliana)}
 
 \item{ont}{A character string specifying the ontology type ("BP", "CC", or "MF")}
 
@@ -28,10 +28,6 @@ pGO(
 \item{qvalueCutoff}{Q-value cutoff (default: 0.2)}
 
 \item{simplify_cutoff}{Similarity cutoff for simplifying GO terms (default: 0.7)}
-
-\item{use_cache}{Logical, whether to use cached results (default: TRUE)}
-
-\item{cache_dir}{Directory for storing cached results (default: "cache")}
 }
 \value{
 A simplified enrichGO result object or NULL if no enrichment is found
