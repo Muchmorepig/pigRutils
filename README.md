@@ -1,9 +1,6 @@
 # pigRutils
+记录日常使用的R小工具
 
-## install
-```R
-devtools::install_github("Muchmorepig/pigRutils")
-```
 ## 安装
 ```R
 devtools::install_github("Muchmorepig/pigRutils")
