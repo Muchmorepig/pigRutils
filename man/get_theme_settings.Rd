@@ -2,34 +2,14 @@
 % Please edit documentation in R/plotSCdim.R
 \name{get_theme_settings}
 \alias{get_theme_settings}
-\title{Single Cell Visualization Function}
+\title{Get theme settings for single cell plots}
 \usage{
 get_theme_settings()
 }
-\arguments{
-\item{seurat_obj}{Seurat对象}
-
-\item{reduction}{降维方法 (例如: "umap", "tsne", "harmony_umap")}
-
-\item{group_by}{分组变量 (例如: "seurat_clusters", "celltype", "orig.ident")}
-
-\item{split_by}{是否需要分面显示的变量(可选)}
-
-\item{colors}{自定义颜色向量(可选)}
-
-\item{point_size}{点的大小}
-
-\item{save}{是否保存图片}
-
-\item{save_path}{保存路径}
-
-\item{width}{图片宽度}
-
-\item{height}{图片高度}
-}
 \value{
-ggplot对象
+A ggplot2 theme object
 }
 \description{
-Single Cell Visualization Function
+Get theme settings for single cell plots
 }
+\keyword{internal}
