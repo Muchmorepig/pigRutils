@@ -32,28 +32,28 @@
 #' plot_sc_dim(seurat_obj, group_by = "seurat_clusters")
 #'
 #' # With splitting
-#' plot_sc_dim(seurat_obj, 
+#' embSCdim(seurat_obj, 
 #'             group_by = "celltype", 
 #'             split_by = "orig.ident",
 #'             point_size = 0.2)
 #'
 #' # Custom colors
-#' plot_sc_dim(seurat_obj,
+#' embSCdim(seurat_obj,
 #'             group_by = "orig.ident",
 #'             colors = c("#1dc1ab", "#56acfc", "#fc877f"))
 #' }
 #'
 #' @export
-plot_sc_dim <- function(seurat_obj,
-                       reduction = "umap",
-                       group_by,
-                       split_by = NULL,
-                       colors = NULL,
-                       point_size = 0.1,
-                       save = FALSE,
-                       save_path = NULL,
-                       width = 8,
-                       height = 6) {
+embSCdim <- function(seurat_obj,
+                        reduction = "umap",
+                        group_by,
+                        split_by = NULL,
+                        colors = NULL,
+                        point_size = 0.1,
+                        save = FALSE,
+                        save_path = NULL,
+                        width = 8,
+                        height = 6) {
   
   # Input validation
   if (!inherits(seurat_obj, "Seurat")) {
@@ -100,8 +100,8 @@ plot_sc_dim <- function(seurat_obj,
   dim_names <- colnames(dim_coords)[-1]
   p <- ggplot(plot_data, 
               aes_string(x = dim_names[1], 
-                        y = dim_names[2], 
-                        color = group_by)) +
+                         y = dim_names[2], 
+                         color = group_by)) +
     ggrastr::geom_point_rast(size = point_size) +
     get_theme_settings()
   
@@ -161,4 +161,4 @@ get_theme_settings <- function() {
       legend.title = element_blank(),
       legend.text = element_text(size = 12)
     )
-}
+} 
