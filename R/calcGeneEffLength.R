@@ -29,7 +29,7 @@ calcGeneEL <- function(gtf_file, cores = NULL) {
   
   # Set up parallel processing
   if (is.null(cores)) {
-    cores <- max(1, floor(0.5 * parallel::detectCores()))
+    cores <- max(1, floor(0.1 * parallel::detectCores()))
   }
   cl <- parallel::makeCluster(cores)
   on.exit(parallel::stopCluster(cl)) # Ensure cluster is stopped when function exits
