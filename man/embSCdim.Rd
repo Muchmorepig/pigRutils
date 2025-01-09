@@ -11,6 +11,11 @@ embSCdim(
   split_by = NULL,
   colors = NULL,
   point_size = 0.1,
+  add_label = FALSE,
+  label_size = 4,
+  label_color = "black",
+  label_shadow = 0.1,
+  shadow_color = "white",
   save = FALSE,
   save_path = NULL,
   width = 8,
@@ -33,6 +38,16 @@ Must be present in seurat_obj@meta.data}
 
 \item{point_size}{Numeric value specifying point size. Default: 0.1}
 
+\item{add_label}{Logical indicating whether to add labels. Default: FALSE}
+
+\item{label_size}{Numeric value specifying label text size. Default: 4}
+
+\item{label_color}{Character string specifying label color. Default: "black"}
+
+\item{label_shadow}{Numeric value specifying label shadow size. Default: 0.1}
+
+\item{shadow_color}{Character string specifying shadow color. Default: "white"}
+
 \item{save}{Logical indicating whether to save the plot. Default: FALSE}
 
 \item{save_path}{Character string specifying save location if save=TRUE}
@@ -54,15 +69,17 @@ using a consistent theme and styling.
 plot_sc_dim(seurat_obj, group_by = "seurat_clusters")
 
 # With splitting
-embSCdim(seurat_obj, 
-            group_by = "celltype", 
-            split_by = "orig.ident",
-            point_size = 0.2)
+embSCdim(seurat_obj,
+  group_by = "celltype",
+  split_by = "orig.ident",
+  point_size = 0.2
+)
 
 # Custom colors
 embSCdim(seurat_obj,
-            group_by = "orig.ident",
-            colors = c("#1dc1ab", "#56acfc", "#fc877f"))
+  group_by = "orig.ident",
+  colors = c("#1dc1ab", "#56acfc", "#fc877f")
+)
 }
 
 }
