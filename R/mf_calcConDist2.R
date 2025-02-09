@@ -43,101 +43,133 @@
 
 library(data.table)
 
-calcConDist_v2 <- function(dat.tb,
-                          colname.cluster = "seurat_clusters",
-                          colname.sample = "sample_id",
-                          colname.condition = "orig.ident",
-                          method = "mixed_model",
-                          min.cells.per.sample = 50) {
-  # 参数检查
-  required_cols <- c(colname.cluster, colname.sample, colname.condition)
-  missing_cols <- setdiff(required_cols, colnames(dat.tb))
-  if (length(missing_cols) > 0) {
-    stop(sprintf("缺少必要列: %s", paste(missing_cols, collapse = ", ")))
+calcConDist_v2 <- function(dat.tb, 
+                                  colname.cluster = "seurat_clusters",
+                                  colname.sample = "orig.ident",
+                                  colname.condition = "group",
+                                  method = c("mixed_model", "sample_level_chisq", "fisher_exact"),
+                                  min.cells.per.sample = 50,
+                                  effect_threshold = 1.2) {
+  
+  # 检查必要包安装
+  if (!requireNamespace("data.table", quietly = TRUE)) {
+    stop("需要安装data.table包：install.packages('data.table')")
   }
-
-  # 过滤低质量样本
-  dat.tb <- dat.tb[, sample_cells := .N, by = colname.sample][sample_cells >= min.cells.per.sample]
-
-  # 核心统计方法
+  if (method == "mixed_model" && !requireNamespace("lme4", quietly = TRUE)) {
+    stop("需要安装lme4包：install.packages('lme4')")
+  }
+  
+  # 数据格式转换和验证
+  dt <- data.table::as.data.table(dat.tb)
+  required_cols <- c(colname.cluster, colname.sample, colname.condition)
+  missing_cols <- setdiff(required_cols, colnames(dt))
+  if (length(missing_cols) > 0) {
+    stop("缺少必要列：", paste(missing_cols, collapse = ", "))
+  }
+  
+  # 检查条件列与样本列是否相同
+  if (colname.condition == colname.sample) {
+    stop("条件列不能与样本列相同，请指定独立的实验条件列")
+  }
+  
+  # 数据预处理
+  message("正在预处理数据...")
+  dt[, sample_cell_count := .N, by = c(colname.sample)]
+  dt_filtered <- dt[sample_cell_count >= min.cells.per.sample]
+  
+  # 检查数据是否有效
+  if (nrow(dt_filtered) == 0) {
+    stop("过滤后无有效数据，请降低min.cells.per.sample阈值")
+  }
+  
+  # 选择统计方法
+  method <- match.arg(method)
+  message("使用分析方法：", method)
+  
+  # 核心分析逻辑
   if (method == "mixed_model") {
-    # 使用混合效应模型
-    library(lme4)
-    library(broom.mixed)
-
-    # 生成样本-簇-条件计数矩阵
-    sample_counts <- dat.tb[, .(.N), by = c(colname.sample, colname.cluster, colname.condition)]
-
+    # 混合效应模型方法
+    message("正在拟合混合效应模型...")
+    
+    # 生成汇总数据
+    count_data <- dt_filtered[, .(N = .N), 
+      by = c(colname.sample, colname.cluster, colname.condition)]
+    
+    # 重命名列以适应模型公式
+    data.table::setnames(count_data, 
+      old = c(colname.sample, colname.cluster, colname.condition),
+      new = c("sample", "cluster", "condition"))
+    
     # 拟合模型
-    model <- glmer(
+    model <- lme4::glmer(
       formula = N ~ condition + (1|sample) + (1|cluster),
-      data = sample_counts,
+      data = count_data,
       family = poisson()
     )
-
+    
     # 提取结果
-    res <- tidy(model, effects = "fixed") %>%
-      filter(term == colname.condition) %>%
-      mutate(
+    res <- data.table::as.data.table(broom.mixed::tidy(model)) %>% 
+      .[term == "condition", .(estimate, std.error, p.value)] %>% 
+      .[, `:=`(
+        effect_size = exp(estimate),
         FDR = p.adjust(p.value, "BH"),
-        effect_size = exp(estimate)
-      )
-
+        significance = data.table::fcase(
+          FDR < 0.01 & abs(effect_size) > effect_threshold, "****",
+          FDR < 0.05 & abs(effect_size) > effect_threshold, "***",
+          FDR < 0.1 & abs(effect_size) > effect_threshold, "*",
+          default = "ns"
+        )
+      )]
+    
     return(list(
       model = model,
       results = res,
-      message = "使用混合效应模型（包含样本和簇的随机效应）"
+      filtered_data = dt_filtered,
+      model_summary = summary(model)
     ))
-
+    
   } else if (method == "sample_level_chisq") {
     # 样本层级的卡方检验
-
-    # 生成三维列联表（样本 x 簇 x 条件）
-    crosstab <- dcast(dat.tb,
-                     formula = paste(colname.sample, "~", colname.cluster, "+", colname.condition),
-                     value.var = colname.sample,
-                     fun.aggregate = length)
-
-    # 执行卡方检验
-    chisq_res <- chisq.test(crosstab[, -1])  # 排除样本名列
-
-    # 计算标准化残差
-    standardized_resid <- chisq_res$residuals / sqrt(sum(chisq_res$residuals^2))
-
-    return(list(
-      observed = chisq_res$observed,
-      expected = chisq_res$expected,
-      residuals = standardized_resid,
-      p.value = chisq_res$p.value
-    ))
-
-  } else if (method == "fisher_exact") {
-    # 样本层级的Fisher精确检验
-    library(plyr)
-
-    res <- dlply(dat.tb, colname.cluster, function(cluster_data) {
-      # 对每个簇进行样本级别的检验
-      sample_counts <- cluster_data[, .N, by = c(colname.sample, colname.condition)]
-
-      # 构建2x2表（condition x counts）
-      contingency_table <- table(sample_counts[[colname.condition]], sample_counts$N)
-
-      if (all(dim(contingency_table) == c(2,2))) {
-        fisher.test(contingency_table)$p.value
-      } else {
-        NA_real_
-      }
-    })
-
-    # 多重检验校正
-    res_df <- data.frame(
-      cluster = names(res),
-      p.value = unlist(res),
-      FDR = p.adjust(unlist(res), "BH")
+    message("执行样本层级卡方检验...")
+    
+    # 生成三维列联表
+    crosstab <- data.table::dcast(
+      dt_filtered,
+      formula = reformulate(
+        termlabels = c(colname.sample, colname.cluster),
+        response = colname.condition),
+      fun.aggregate = length
     )
-
-    return(res_df)
+    
+    # 执行卡方检验
+    chisq_test <- stats::chisq.test(crosstab[, -1])
+    
+    return(list(
+      observed = chisq_test$observed,
+      expected = chisq_test$expected,
+      residuals = chisq_test$residuals,
+      p.value = chisq_test$p.value,
+      standardized_residuals = chisq_test$residuals / sqrt(sum(chisq_test$residuals^2))
+    ))
+    
+  } else if (method == "fisher_exact") {
+    # 簇特异的Fisher精确检验
+    message("执行簇特异性Fisher检验...")
+    
+    results <- dt_filtered[, {
+      # 对每个cluster进行分析
+      cont_table <- table(get(colname.condition))
+      if (all(dim(cont_table) == c(2,2))) {
+        ft <- fisher.test(cont_table)
+        .(p.value = ft$p.value, estimate = ft$estimate)
+      } else {
+        .(p.value = NA_real_, estimate = NA_real_)
+      }
+    }, by = c(colname.cluster)]
+    
+    # 多重检验校正
+    results[, FDR := p.adjust(p.value, "BH")]
+    
+    return(results)
   }
-
-  stop("不支持的统计方法，可用选项: mixed_model, sample_level_chisq, fisher_exact")
 }
