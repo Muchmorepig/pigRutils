@@ -7,7 +7,7 @@
 #' @importFrom methods is
 #' @importFrom writexl write_xlsx
 #' @importFrom grDevices pdf
-#' @docType package
+#' @docType _PACKAGE
 NULL
 
 #' Perform Gene Ontology (GO) Enrichment Analysis
@@ -46,25 +46,25 @@ pGO <- function(
         warning("No gene IDs provided.")
         return(NULL)
     }
-    
+
     if (!is(orgdb, "OrgDb")) {
         stop("orgdb must be an OrgDb object")
     }
-    
+
     if (!keyType %in% keytypes(orgdb)) {
         stop(sprintf("Invalid keyType. Must be one of: %s",
                     paste(keytypes(orgdb), collapse = ", ")))
     }
-    
+
     valid_onts <- c("BP", "CC", "MF")
     if (!ont %in% valid_onts) {
         stop(sprintf("Invalid ontology type. Must be one of: %s",
                     paste(valid_onts, collapse = ", ")))
     }
-    
+
     # Remove duplicates
     gene_ids <- unique(gene_ids)
-    
+
     # Perform GO enrichment analysis with error handling
     result <- tryCatch({
         # Perform GO enrichment
@@ -77,13 +77,13 @@ pGO <- function(
             pvalueCutoff = pvalueCutoff,
             qvalueCutoff = qvalueCutoff
         )
-        
+
         # Check if enrichment results are empty
         if (is.null(enrich_res) || nrow(enrich_res@result) == 0) {
             message("No significant GO terms found.")
             return(NULL)
         }
-        
+
         # Simplify GO terms
         message("Simplifying GO terms...")
         simplified_res <- clusterProfiler::simplify(
@@ -92,20 +92,20 @@ pGO <- function(
             by = "p.adjust",
             select_fun = min
         )
-        
+
         # Check if simplification resulted in any terms
         if (is.null(simplified_res) || nrow(simplified_res@result) == 0) {
             message("No GO terms remained after simplification.")
             return(enrich_res)
         }
-        
+
         simplified_res
-        
+
     }, error = function(e) {
         warning(sprintf("Error in GO analysis: %s", e$message))
         return(NULL)
     })
-    
+
     return(result)
 }
 
@@ -144,7 +144,7 @@ gobar <- function(
     if (!requireNamespace("ggplot2", quietly = TRUE)) {
         stop("ggplot2 package is required but not installed.")
     }
-    
+
     # Create base plot
     p <- ggplot(data, mapping) +
         geom_bar(
@@ -167,7 +167,7 @@ gobar <- function(
             panel.grid.minor.y = element_blank(),
             axis.text.y = element_text(size = fontsize)
         )
-    
+
     # Add gene counts if requested
     if (show_count) {
         p <- p + geom_text(
@@ -186,7 +186,7 @@ gobar <- function(
             angle = text_angle
         )
     }
-    
+
     return(p)
 }
 
@@ -211,12 +211,12 @@ plotGO <- function(
         warning("No GO enrichment results to plot.")
         return(NULL)
     }
-    
+
     # Extract top N results
     plot_data <- go_result@result[
         order(go_result@result$p.adjust)[1:min(top_n, nrow(go_result@result))],
     ]
-    
+
     # Create plot based on type
     p <- switch(
         plot_type,
@@ -226,12 +226,12 @@ plotGO <- function(
         # "heatmap" = heatplot(go_result, showCategory = top_n, ...),
         stop("Invalid plot type")
     )
-    
+
     # Save plot if output file specified
     if (!is.null(output_file)) {
         ggsave(output_file, p, ...)
     }
-    
+
     return(p)
 }
 
@@ -248,19 +248,19 @@ export_GO <- function(go_result, file, sheets = NULL) {
         warning("No GO enrichment results to export.")
         return(invisible(NULL))
     }
-    
+
     # Function to extract results from a single GO result
     extract_results <- function(go_obj) {
         if (is.null(go_obj)) return(NULL)
         go_obj@result
     }
-    
+
     # Handle different input types
     if (grepl("\\.xlsx$", file)) {
         if (is.list(go_result) && !is(go_result, "enrichResult")) {
             # Handle list of GO results
             sheets <- lapply(go_result, extract_results)
-            
+
             # If the list is named, use those names for sheets
             if (!is.null(names(go_result))) {
                 names(sheets) <- names(go_result)
@@ -275,7 +275,7 @@ export_GO <- function(go_result, file, sheets = NULL) {
             }
         }
         writexl::write_xlsx(sheets, path = file)
-        
+
     } else if (grepl("\\.csv$", file)) {
         if (is.list(go_result) && !is(go_result, "enrichResult")) {
             warning("Multiple GO results cannot be exported to a single CSV file. Only the first result will be exported.")
@@ -287,7 +287,7 @@ export_GO <- function(go_result, file, sheets = NULL) {
     } else {
         stop("Unsupported file format. Use .xlsx or .csv")
     }
-    
+
     message(sprintf("Results exported to %s", file))
     return(invisible(NULL))
 }
@@ -304,13 +304,13 @@ batch_GO <- function(gene_lists, orgdb, ...) {
     if (!is.list(gene_lists) || is.null(names(gene_lists))) {
         stop("gene_lists must be a named list of gene vectors")
     }
-    
+
     results <- lapply(names(gene_lists), function(name) {
         message(sprintf("Processing: %s", name))
         result <- pGO(gene_lists[[name]], orgdb, ...)
         return(result)
     })
-    
+
     names(results) <- names(gene_lists)
     return(results)
 }
