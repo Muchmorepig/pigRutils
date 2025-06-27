@@ -7,14 +7,14 @@
 #' @export
 select_colors <- function(palette) {
   switch(palette,
-    col29 = c(
+    col_29 = c(
       "#eb9aeb", "#0d9eff", "#e8b964", "#465ca8", "#089ac3", "#dacd50",
       "#0b6a24", "#66c4cc", "#4bace0", "#907bb6", "#5bb449", "#c5da6b",
       "#ef9d3b", "#86c69e", "#6f6f70", "#68ac7d", "#557d65", "#7c4ca2",
       "#f1d1a0", "#649da8", "#ff9ea9", "#c3e1a2", "#c779b7", "#727e57",
       "#a791a8", "#ae9787", "#008c99", "#f46952", "#c94e91"
     ),
-    col28 = c(
+    col_28 = c(
       "#d60101", "#d0595a", "#f786a8", "#f74a3a",
       "#faad89", "#f77c43", "#f85408", "#f01778",
       "#b7889d", "#ecd0d0", "#17e7ee", "#8dcaec",
@@ -27,6 +27,11 @@ select_colors <- function(palette) {
       "#49a0b3", "#a0d9a4", "#fee998", "#ffb763", "#f1949c", "#cd281c"
     ),
     col_2 = c("#fd81ae", "#4fd5fa"),
+    col_15 = c(
+      "#f670cb", "#b1cfda", "#ead054", "#da9f91", "#d3ef9b",
+      "#e7555b", "#e97617", "#3ea6bb", "#b489ac", "#adba26",
+      "#299e92", "#f3dc5b", "#f09679", "#4dc684", "grey85"
+    ),
     col_33 = c(
       "#9ec4d3", "#16c1c7", "#f786a8", "#faad89", "#fdd0a2",
       "#f77c43", "#f85408", "#05968e", "#b7889d", "#ecd0d0",
