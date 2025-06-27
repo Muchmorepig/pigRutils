@@ -8,7 +8,7 @@ select_colors(palette)
 }
 \arguments{
 \item{palette}{A character string indicating the color palette to use.
-Possible values are "col29", "col28", "col_sim", "col_sex", and "col_33".}
+Possible values are "col_29", "col_28", "col_15", "col_sim", "col_sex", and "col_33".}
 }
 \value{
 A vector of colors corresponding to the selected palette.
