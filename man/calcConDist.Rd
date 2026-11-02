@@ -3,45 +3,78 @@
 \name{calcConDist}
 \alias{calcConDist}
 \title{Calculate Cell Type Distribution by Condition}
+\usage{
+calcConDist(
+  dat.tb,
+  bySample = FALSE,
+  colname.cluster = "seurat_clusters",
+  colname.sample = NULL,
+  colname.condition = "orig.ident",
+  method = "chisq",
+  min.rowSum = 0,
+  sample.inference = FALSE
+)
+}
 \arguments{
-\item{dat.tb}{A data.table object containing the cell metadata}
+\item{dat.tb}{A data.frame or data.table; one row per retained cell.}
 
-\item{bySample}{Logical, whether to perform analysis by sample. Default is FALSE}
+\item{bySample}{Logical. For chisq/fisher, return a named list of results
+computed separately within each sample. Does not create biological replicates.
+For freq, proportions are always computed per sample.}
 
-\item{colname.cluster}{Character, column name for cell clusters. Default is "seurat_clusters"}
+\item{colname.cluster}{Cluster column name. Unused factor levels are retained.}
 
-\item{colname.sample}{Character, column name for sample IDs. Required if bySample = TRUE}
+\item{colname.sample}{Sample column name; required for bySample or freq.}
 
-\item{colname.condition}{Character, column name for experimental conditions. Default is "orig.ident"}
+\item{colname.condition}{Condition column name.}
 
-\item{method}{Character, statistical method to use. Options are "chisq", "fisher", or "freq". Default is "chisq"}
+\item{method}{One of "chisq", "fisher", or "freq" (exact spelling).}
 
-\item{min.rowSum}{Numeric, minimum row sum threshold for filtering in fisher test. Default is 0}
+\item{min.rowSum}{Nonnegative threshold. Fisher reports clusters whose pooled
+count is strictly greater than this value; all cells remain in the background.}
+
+\item{sample.inference}{Logical, default FALSE. For freq only, explicitly
+assert that sample IDs identify independent biological replicates and enable
+unpaired Welch and Wilcoxon tests. At least two samples on each side required.}
 }
 \value{
-Depending on the method:
-\itemize{
-\item For "chisq": Returns a matrix of observed/expected ratios
-\item For "fisher": Returns a list containing count distribution, p-values, adjusted p-values, and odds ratios
-\item For "freq": Returns a list containing frequency analysis results with logFC and significance tests
-}
+chisq: observed/expected matrix, with counts, expected, p.value,
+  status and test.warning attributes. fisher: list with count.dist, p.tb,
+  padj.tb, OR.tb; long-table labels remain V1/V2. bySample returns a named
+  list of these same structures. freq: list with res, dist.logFC.tb,
+  dist.FDR.tb, dist.charSig.tb and sample.freq.tb. Legacy freq output labels
+  majorCluster, loc, sampleID are fixed output names, regardless of input names.
+  Undefined tests are NA with a status; no pseudocount is added.
 }
 \description{
-Calculates the distribution of cell types across different experimental conditions
-using various statistical methods including chi-square test and Fisher's exact test.
+Describe cell composition or compare cell counts. Sample-level
+tests require explicit opt-in and independent biological samples.
+}
+\details{
+chisq and fisher use cells as observations, not biological replicates. They
+cannot establish population-level condition effects. Chisq needs at least
+two positive row and column margins; zero margins are retained as NA.
+Fisher compares each cluster/condition against all other clusters/conditions;
+zero 2x2 margins yield NA. BH adjustment covers all reported cluster-condition
+tests (separately within each sample when bySample=TRUE).
+
+freq requires exactly one condition per sample (paired designs unsupported).
+Missing clusters in observed samples are zero-filled; absent sample-condition
+combinations are not invented. Means give equal weight to each sample. Each
+condition is compared with all remaining samples pooled; with >2 conditions,
+the reference is sample-weighted, not condition-weighted. logFC is log2 of the
+mean proportion ratio: positive/zero gives Inf, zero/positive -Inf, 0/0 NA.
+All-zero clusters are not tested. Each test's BH family includes all res rows;
+for two conditions reciprocal contrasts are retained for compatibility.
+Test errors/warnings are recorded in status.t/status.w; Wilcoxon uses a
+tie-corrected normal approximation. Sample independence cannot be verified
+from metadata. Technical libraries or random cell splits are not replicates.
 }
 \examples{
-\dontrun{
-# Basic usage with chi-square test
-result <- calcConDist(dat.tb)
-
-# Using Fisher's exact test
-fisher_result <- calcConDist(dat.tb, method = "fisher")
-
-# Analysis by sample
-sample_result <- calcConDist(dat.tb, 
-                            bySample = TRUE,
-                            colname.sample = "sample_id")
-}
-
+d <- data.frame(cluster = c("A", "B", "A", "A"),
+                sample = c("s1", "s1", "s2", "s2"),
+                condition = c("M", "M", "F", "F"))
+r <- calcConDist(d, colname.cluster = "cluster", colname.sample = "sample",
+                 colname.condition = "condition", method = "freq")
+r$sample.freq.tb
 }
